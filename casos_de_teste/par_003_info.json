@@ -1,0 +1,15 @@
+{
+  "modo": "subgrafo",
+  "nos_mcs": 5,
+  "prob": 0.42,
+  "extras_g1": 0,
+  "extras_g2": 4,
+  "mcs_size_nodes": 5,
+  "mapping_g1_to_g2": {
+    "a0": "b0",
+    "a1": "b1",
+    "a2": "b2",
+    "a3": "b3",
+    "a4": "b4"
+  }
+}
