@@ -41,7 +41,6 @@ class SimpleGraph:
                     if len(parts) == 2:
                         u, v = parts[0], parts[1]
                         g.add_edge(u, v)
-                    # ignora outras linhas (evita nós fantasmas)
             return g
         except FileNotFoundError:
             print(f"Erro: Arquivo {filepath} não encontrado.")
@@ -66,8 +65,7 @@ class SimpleBacktrackingMatcher:
 
     def _is_consistent_induced(self, u1, v2):
         """
-        Consistência para MCS INDUZIDO:
-        Para todo w já mapeado, devemos ter:
+        Para todo w já mapeado:
            g1.has_edge(u1, w) == g2.has_edge(v2, mapping[w])
         """
         for w in self.mapping.keys():
@@ -79,7 +77,7 @@ class SimpleBacktrackingMatcher:
         return True
 
     def _solve(self, g1_unmapped, g2_unmapped):
-        # Atualiza melhor solução
+        # atualiza melhor solução
         if len(self.mapping) > len(self.best_mapping):
             self.best_mapping = self.mapping.copy()
 
@@ -112,14 +110,10 @@ class SimpleBacktrackingMatcher:
         return self.best_mapping
 
 # ==============================================================================
-# 3. Algoritmo 2: VF2 Branch & Bound (INDUCED)
+# 3. Algoritmo 2: Branch & Bound 
 # ==============================================================================
 
 class VF2Matcher:
-    """
-    VF2-like matcher adaptado para MCS INDUZIDO.
-    Mantém self.g1 como o grafo com menos nós (para reduzir busca).
-    """
     def __init__(self, g1: 'SimpleGraph', g2: 'SimpleGraph'):
         if len(g1) <= len(g2):
             self.g1, self.g2 = g1, g2
@@ -135,14 +129,13 @@ class VF2Matcher:
 
     def _is_consistent_induced(self, u1, v2):
         """
-        Consistência INDUZIDA: todo par (u,w) mapeado deve respeitar
         g1.has_edge(u,w) == g2.has_edge(v,mapping[w])
         """
         for w, mapped in self.mapping.items():
             if self.g1.has_edge(u1, w) != self.g2.has_edge(v2, mapped):
                 return False
 
-        # Verifica consistência global (entre pares já mapeados)
+        # verifica consistência global (entre pares já mapeados)
         for (a, b) in itertools.combinations(self.mapping.keys(), 2):
             a_m, b_m = self.mapping[a], self.mapping[b]
             if self.g1.has_edge(a, b) != self.g2.has_edge(a_m, b_m):
@@ -151,11 +144,11 @@ class VF2Matcher:
         return True
 
     def _solve(self, g1_idx, g2_unmapped):
-        # Atualiza melhor mapeamento
+        # atualiza melhor mapeamento
         if len(self.mapping) > len(self.best_mapping):
             self.best_mapping = self.mapping.copy()
 
-        # Poda por limite de tamanho possível
+        # poda por limite de tamanho possível
         remaining = len(self.g1_nodes_list) - g1_idx
         if len(self.mapping) + remaining <= len(self.best_mapping):
             return
@@ -173,7 +166,7 @@ class VF2Matcher:
                 g2_unmapped.add(v2)
                 del self.mapping[u1]
 
-        # Possibilidade de ignorar este nó
+        # possibilidade de ignorar este nó
         self._solve(g1_idx + 1, g2_unmapped)
 
     def find_mcs_mapping(self):
@@ -189,11 +182,6 @@ class VF2Matcher:
 # ==============================================================================
 
 def mcs_clique_benchmark(g1_nx: nx.Graph, g2_nx: nx.Graph):
-    """
-    Encontra MCS INDUZIDO via grafo de compatibilidade, mas filtra apenas cliques
-    que geram mapeamentos globalmente consistentes.
-    Retorna o maior mapeamento consistente encontrado.
-    """
     M = nx.Graph()
     node_pairs = list(itertools.product(g1_nx.nodes(), g2_nx.nodes()))
     M.add_nodes_from(node_pairs)
@@ -214,7 +202,7 @@ def mcs_clique_benchmark(g1_nx: nx.Graph, g2_nx: nx.Graph):
         for clique in nx.find_cliques(M):
             # clique é lista de pares (u,v)
             mapping = {u: v for (u, v) in clique}
-            # cheque injetividade (deve ser injetiva por construção, mas checamos)
+            # cheque injetividade (deve ser injetiva por construção, mas chequei mesmo assim por uns bugs)
             if len(set(mapping.keys())) != len(mapping) or len(set(mapping.values())) != len(mapping):
                 continue
 
@@ -297,12 +285,10 @@ def visualize_mcs(g1_nx, g2_nx, mapping, title):
 
 def load_ground_truth_info(g1_path):
     """
-    Procura um arquivo _info.json com o mesmo prefixo de g1_path.
-    Ex.: par_001_A.edgelist -> par_001_info.json
+    Procura um arquivo _info.json com o mesmo prefixo de g1_path
     """
     base = os.path.basename(g1_path)
     dirn = os.path.dirname(g1_path) or "."
-    # assume nome par_001_A.edgelist -> par_001_info.json
     prefix = base.split("_A.edgelist")[0]
     info_path = os.path.join(dirn, f"{prefix}_info.json")
     if os.path.exists(info_path):
@@ -318,7 +304,7 @@ def validar_mcs_isomorfico(G1, G2, mapping_gt, mapping_encontrado, prefix="mcs_v
     - Gera visualizações lado a lado e salva em arquivos.
     """
 
-    # Subgrafos correspondentes
+    # subgrafos correspondentes
     sub_gt_G1 = G1.subgraph(mapping_gt.keys()).copy()
     sub_gt_G2 = G2.subgraph(mapping_gt.values()).copy()
     sub_alg_G1 = G1.subgraph(mapping_encontrado.keys()).copy()
@@ -327,12 +313,12 @@ def validar_mcs_isomorfico(G1, G2, mapping_gt, mapping_encontrado, prefix="mcs_v
     size_gt = sub_gt_G1.number_of_nodes()
     size_alg = sub_alg_G1.number_of_nodes()
 
-    # Verificação estrutural
+    # verificação estrutural
     iso_same = nx.is_isomorphic(sub_gt_G1, sub_alg_G1) and nx.is_isomorphic(sub_gt_G2, sub_alg_G2)
     iso_cross = nx.is_isomorphic(sub_gt_G1, sub_alg_G2)  # às vezes o mapeamento é invertido
     iso = iso_same or iso_cross
 
-    # Nós faltantes/extras
+    # nós faltantes/extras
     missing = {u: v for u, v in mapping_gt.items() if u not in mapping_encontrado}
     extras = {u: v for u, v in mapping_encontrado.items() if u not in mapping_gt}
 
@@ -345,7 +331,6 @@ def validar_mcs_isomorfico(G1, G2, mapping_gt, mapping_encontrado, prefix="mcs_v
     print(f"Extras (encontrados mas não no GT): {extras}")
     print("============================================")
 
-    # === Visualização lado a lado ===
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
     pos1 = nx.spring_layout(sub_gt_G1, seed=42)
     pos2 = nx.spring_layout(sub_alg_G1, seed=42)
@@ -381,7 +366,7 @@ def validar_mcs_isomorfico(G1, G2, mapping_gt, mapping_encontrado, prefix="mcs_v
 # ==============================================================================
 
 def run_single_case(g1_file, g2_file, algo, repetitions=1, no_visual=False):
-    """Executa um par de grafos, calcula MCS e valida com ground-truth (se disponível)."""
+    """Executa um par de grafos, calcula MCS e valida com ground-truth """
     g1_custom = SimpleGraph.from_edgelist(g1_file)
     g2_custom = SimpleGraph.from_edgelist(g2_file)
     g1_nx = nx.read_edgelist(g1_file)
@@ -410,7 +395,6 @@ def run_single_case(g1_file, g2_file, algo, repetitions=1, no_visual=False):
     report = generate_report(algo, mapping, duration)
     print(report)
 
-    # Verificação de ground-truth
     validation_result = None
     info = load_ground_truth_info(g1_file)
     if info is not None:
@@ -443,7 +427,6 @@ def run_single_case(g1_file, g2_file, algo, repetitions=1, no_visual=False):
         "mcs_size": len(mapping),
         "validation": validation_result,
     }
-
 
 def run_benchmark(benchmark_dir, repetitions=5):
     print(f"🔍 Procurando pares de grafos em: {benchmark_dir}")
