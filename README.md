@@ -8,12 +8,12 @@ Este projeto realiza a **busca do Máximo Subgrafo Comum (MCS) Induzido** entre 
 
 ### 1️⃣ Execução Única
 Compara **dois grafos específicos** (`.edgelist`) usando um algoritmo à sua escolha.
-Ao fazer a execução única, um relatório .txt com o nome do algoritmo escolhido e uma imagem da solução encontrada serão gerados na raiz do repositório. **Deve-se salvar caso não queira que esses sejam sobrescritos na próximo execução do algoritmo.**
+Ao fazer a execução única, um relatório .txt com o nome do algoritmo escolhido e uma imagem da solução encontrada serão gerados na raiz do repositório. **Deve-se salvar caso não queira que esses sejam sobrescritos na próxima execução do algoritmo.**
 
 **Uso:**
 ```bash
 python main.py grafoA.edgelist grafoB.edgelist --algo=<backtracking|vf2|clique>
-# Deve-se informar a pasta com base no diretório deste repositório (olhar os exemplos)
+# Deve-se informar a pasta com base no diretório raiz deste repositório (olhar os exemplos)
 ```
 
 ### 2️⃣ Modo Benchmark 
